@@ -6,20 +6,28 @@ from dataclasses import dataclass
 
 @dataclass
 class Op:
+    """
+    Holds metadata for an operation.
+
+    :param args: Number of arguments operator accepts
+    :param posArgs: Out of the above, the number of arguments that
+                    are positions (for writing output)
+    """
     args: int = 0
     posArgs: int = 0
 
     def inputs(self):
+        """
+        Returns the number of input arguments.
+        """
         return self.args - self.posArgs
 
 class Opcode(int, Enum):
-    def __new__(cls, arg):
-        code, op = arg
-        obj = int.__new__(cls, code)
-        obj._value_ = code
-        obj.op = op
-        return obj
+    """
+    Represents an Opcode: an integer, name and metadata.
+    """
 
+    # Map each opcode name to its opcode int and metadata
     ADD             = (1,  Op(args=3, posArgs=1)),
     MULTIPLY        = (2,  Op(args=3, posArgs=1)),
     INPUT           = (3,  Op(args=1, posArgs=1)),
@@ -30,12 +38,43 @@ class Opcode(int, Enum):
     EQUALS          = (8,  Op(args=3, posArgs=1)),
     END             = (99, Op()),
 
+    def __new__(cls, arg):
+        code, op = arg
+        obj = int.__new__(cls, code)
+        obj._value_ = code
+        obj.op = op
+        return obj
+
 class ParameterMode(IntEnum):
+    """
+    Represents a parameter mode: how a parameter should be interpreted.
+
+    POSITION: parameter is an address
+    IMMEDIATE: parameter is an integer value
+    """
+
     POSITION = 0
     IMMEDIATE = 1
 
 class IntcodeSim:
+    """
+    Parses and executes Intcode.
+    """
+
     def __init__(self, code):
+        """
+        Create an IntcodeSim executor. Each executor can only be run
+        once, and allows introspection of outputs and the memory state.
+
+        :param code: intcode, as a list of ints or a comma-separated string.
+        :attribute arr: The current intcode state. This may be modified as the code
+                        is executed.
+        :attribute pos: The instruction pointer: position of next intcode to execute
+        :attribute finished: Boolean, true if the intcode has finished executing
+        :attribute queuedInputs: List of inputs to use if requested by intcode
+                                 (lower indexes are used first)
+        :attribute outputs: List of outputs emitted by the intcode, earliest first.
+        """
 
         # Allow a string to be passed, for convenience
         if isinstance(code, str):
@@ -51,6 +90,14 @@ class IntcodeSim:
         self.outputs = []
 
     def queueInput(self, value):
+        """
+        Queues an input value, which will be used (FIFO) when the intcode
+        program requests an input. If the queue is empty, the executor will
+        prompt the user on STDIN instead.
+
+        :param value: Value to enqueue
+        :return: Returns self, for chaining.
+        """
         self.queuedInputs.append(value)
         return self
 
@@ -66,7 +113,11 @@ class IntcodeSim:
 
     @classmethod
     def fromFile(cls, filename):
-        """ load input filename into list of integers """
+        """
+        Creates an IntcodeSim with intcode loaded from the specified file.
+
+        :param filename: The file to load.
+        """
         arr = []
         with open(filename, 'r') as f:
             for line in f:
@@ -75,13 +126,21 @@ class IntcodeSim:
     
     @staticmethod
     def split(string):
-        """ split a string and return its integer components as a list """
+        """ 
+        Converts CSV intcode to a list of integers.
+        """
         return list([int(x) for x in string.split(',')])
 
     @staticmethod
     def parseOpcode(fullOpcode):
-        """ split an opcode into an Opcode value and an array of
-            ParameterModes (one per opcode parameter) """
+        """
+        Parses a full opcode, such as 1102, returning an Opcode object
+        representing the operation, and a list of ParameterModes representing
+        the parameter mode for each argument.
+
+        :param fullOpcode: The integer opcode to parse
+        :return: tuple of opcode, parameterModes
+        """
         opcode = Opcode(fullOpcode % 100)
         fullOpcode //= 100
 
@@ -93,13 +152,17 @@ class IntcodeSim:
         return opcode, parameterModes
 
     def run(self):
-        """ execute the intcode until we reach the end """
+        """
+        Execute the intcode until the program finishes.
+
+        :return: Self, for chaining
+        """
         while not self.finished:
             self.__runStep()
         return self
     
     def __runStep(self):
-        """ execute a single instruction """
+        # Execute a single instruction.
         if self.finished:
             return
 
@@ -149,7 +212,7 @@ class IntcodeSim:
         elif opcode == Opcode.END:
             self.finished = True
         else:
-            raise ValueError("unknown opcode: " + op)
+            raise ValueError("unknown opcode: " + opcode)
 
 class TestQ2(unittest.TestCase):
     """ tests from Advent Calendar question 2 """
