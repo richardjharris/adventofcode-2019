@@ -1,22 +1,38 @@
-from enum import IntEnum
+from enum import Enum, IntEnum
 import sys
 import copy
 import unittest
+from dataclasses import dataclass
 
-class Opcode(IntEnum):
-    add = 1
-    mul = 2
-    input = 3
-    output = 4
-    jump_if_true = 5
-    jump_if_false = 6
-    less_than = 7
-    equals = 8
-    end = 99
+@dataclass
+class Op:
+    args: int = 0
+    posArgs: int = 0
+
+    def inputs(self):
+        return self.args - self.posArgs
+
+class Opcode(int, Enum):
+    def __new__(cls, arg):
+        code, op = arg
+        obj = int.__new__(cls, code)
+        obj._value_ = code
+        obj.op = op
+        return obj
+
+    ADD             = (1,  Op(args=3, posArgs=1)),
+    MULTIPLY        = (2,  Op(args=3, posArgs=1)),
+    INPUT           = (3,  Op(args=1, posArgs=1)),
+    OUTPUT          = (4,  Op(args=1)),
+    JUMP_IF_TRUE    = (5,  Op(args=2)),
+    JUMP_IF_FALSE   = (6,  Op(args=2)),
+    LESS_THAN       = (7,  Op(args=3, posArgs=1)),
+    EQUALS          = (8,  Op(args=3, posArgs=1)),
+    END             = (99, Op()),
 
 class ParameterMode(IntEnum):
-    position = 0
-    immediate = 1
+    POSITION = 0
+    IMMEDIATE = 1
 
 class IntcodeSim:
     def __init__(self, code):
@@ -63,18 +79,18 @@ class IntcodeSim:
         return list([int(x) for x in string.split(',')])
 
     @staticmethod
-    def parseOpcode(opcode):
-        """ split an opcode into an Opcode value and an array of three
+    def parseOpcode(fullOpcode):
+        """ split an opcode into an Opcode value and an array of
             ParameterModes (one per opcode parameter) """
-        op = Opcode(opcode % 100)
-        opcode //= 100
+        opcode = Opcode(fullOpcode % 100)
+        fullOpcode //= 100
 
         parameterModes = []
-        while opcode != 0:
-            parameterModes.append(ParameterMode(opcode % 10))
-            opcode //= 10
+        for v in range(0, opcode.op.inputs()):
+            parameterModes.append(ParameterMode(fullOpcode % 10))
+            fullOpcode //= 10
 
-        return op, parameterModes
+        return opcode, parameterModes
 
     def run(self):
         """ execute the intcode until we reach the end """
@@ -87,84 +103,50 @@ class IntcodeSim:
         if self.finished:
             return
 
-        op, parameterModes = self.parseOpcode(self.arr[self.pos])
+        opcode, parameterModes = self.parseOpcode(self.arr[self.pos])
         self.pos += 1
 
-        # Lambda to get argument at position n (1~) for value x
-        def arg(n, x):
-            mode = parameterModes[n-1] if n <= len(parameterModes) \
-                else ParameterMode.position
+        # Build arguments
+        args = []
+        for i in range(0, opcode.op.args):
+            value = self.arr[self.pos]
+            self.pos += 1
 
-            if mode == ParameterMode.position:
-                return self.arr[x]
-            elif mode == ParameterMode.immediate:
-                return x
+            # posArgs are always treated as immediate
+            if i < opcode.op.inputs() and \
+                parameterModes[i] == ParameterMode.POSITION:
+                args.append( self.arr[value] )
             else:
-                raise ValueError("invalid ParameterMode")
+                args.append( value )
 
-        if op == Opcode.add:
-            input1 = self.arr[self.pos]
-            input2 = self.arr[self.pos+1]
-            outputPos = self.arr[self.pos+2]
-            self.pos += 3
+        # Execute opcode
+        if opcode == Opcode.ADD:
+            self.arr[args[2]] = args[0] + args[1]
 
-            # NB: output self.positions are always immediate.
-            self.arr[outputPos] = arg(1, input1) + arg(2, input2)
-
-        elif op == Opcode.mul:
-            input1 = self.arr[self.pos]
-            input2 = self.arr[self.pos+1]
-            outputPos = self.arr[self.pos+2]
-            self.pos += 3
-
-            self.arr[outputPos] = arg(1, input1) * arg(2, input2)
+        elif opcode == Opcode.MULTIPLY:
+            self.arr[args[2]] = args[0] * args[1]
         
-        elif op == Opcode.input:
-            outputPos = self.arr[self.pos]
-            self.pos += 1
+        elif opcode == Opcode.INPUT:
+            self.arr[args[0]] = self.__getInput()
 
-            self.arr[outputPos] = self.__getInput()
+        elif opcode == Opcode.OUTPUT:
+            self.__putOutput(args[0])
 
-        elif op == Opcode.output:
-            input1 = self.arr[self.pos]
-            self.pos += 1
+        elif opcode == Opcode.JUMP_IF_TRUE:
+            if args[0] != 0:
+                self.pos = args[1]
 
-            value = arg(1, input1)
-            self.__putOutput(value)
+        elif opcode == Opcode.JUMP_IF_FALSE:
+            if args[0] == 0:
+                self.pos = args[1]
 
-        elif op == Opcode.jump_if_true:
-            input1 = self.arr[self.pos]
-            location = self.arr[self.pos+1]
-            self.pos += 2
+        elif opcode == Opcode.LESS_THAN:
+            self.arr[args[2]] = 1 if args[0] < args[1] else 0
 
-            if arg(1, input1) != 0:
-                self.pos = arg(2, location)
+        elif opcode == Opcode.EQUALS:
+            self.arr[args[2]] = 1 if args[0] == args[1] else 0
 
-        elif op == Opcode.jump_if_false:
-            input1 = self.arr[self.pos]
-            location = self.arr[self.pos+1]
-            self.pos += 2
-
-            if arg(1, input1) == 0:
-                self.pos = arg(2, location)
-
-        elif op == Opcode.less_than:
-            a = self.arr[self.pos]
-            b = self.arr[self.pos+1]
-            outputPos = self.arr[self.pos+2]
-            self.pos += 3
-
-            self.arr[outputPos] = 1 if arg(1, a) < arg(2, b) else 0
-
-        elif op == Opcode.equals:
-            a = self.arr[self.pos]
-            b = self.arr[self.pos+1]
-            outputPos = self.arr[self.pos+2]
-            self.pos += 3
-
-            self.arr[outputPos] = 1 if arg(1, a) == arg(2, b) else 0
-
-        elif op == Opcode.end:
+        elif opcode == Opcode.END:
             self.finished = True
         else:
             raise ValueError("unknown opcode: " + op)
