@@ -74,6 +74,11 @@ class IntcodeSim:
         :attribute queuedInputs: List of inputs to use if requested by intcode
                                  (lower indexes are used first)
         :attribute outputs: List of outputs emitted by the intcode, earliest first.
+        :attribute inputFn: If set, inputs will be retrieved by calling this function,
+                            which should return an integer. (If queuedInputs is non-empty,
+                            values will be pulled from there first)
+        :attribute outputFn: If set, will be called with a single integer argument for
+                             for each output value. Values will also be added to 'outputs'
         """
 
         # Allow a string to be passed, for convenience
@@ -88,6 +93,8 @@ class IntcodeSim:
         self.finished = False
         self.queuedInputs = []
         self.outputs = []
+        self.inputFn = None
+        self.outputFn = None
 
     def queueInput(self, value):
         """
@@ -104,12 +111,16 @@ class IntcodeSim:
     def __getInput(self):
         if len(self.queuedInputs):
             return self.queuedInputs.pop(0)
+        elif self.inputFn is not None:
+            return self.inputFn()
         else:
             value = input('Enter value: ')
             return int(value)
 
     def __putOutput(self, value):
         self.outputs.append(value)
+        if self.outputFn is not None:
+            self.outputFn(value)
 
     @classmethod
     def fromFile(cls, filename):
