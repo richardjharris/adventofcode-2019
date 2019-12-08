@@ -1,6 +1,7 @@
 from itertools import islice
 
 def split_every(n, iterable):
+    "split iterable into pieces of size n. lazy"
     i = iter(iterable)
     piece = list(islice(i, n))
     while piece:
@@ -8,11 +9,6 @@ def split_every(n, iterable):
         piece = list(islice(i, n))
 
 def slurp(filename):
+    "read contents of filename into a string and return"
     with open(filename, 'r') as fh:
         return fh.read().rstrip('\n')
-
-def grouper(iterable, n, fillvalue=None):
-    "Collect data into fixed-length chunks or blocks"
-    # grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx
-    args = [iter(iterable)] * n
-    return izip_longest(fillvalue=fillvalue, *args)
