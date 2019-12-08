@@ -1,5 +1,4 @@
 from enum import Enum, IntEnum
-import sys
 import copy
 import unittest
 from dataclasses import dataclass
