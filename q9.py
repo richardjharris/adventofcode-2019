@@ -9,5 +9,11 @@ def part1():
     i.run()
     print(i.outputs)
 
-part1()
+def part2():
+    boost = slurp('q9_input')
+    # Run in sensor boost mode with a value of 2
+    i = IntcodeSim(boost).queueInput(2).run()
+    print(i.outputs)
+
+part2()
 
