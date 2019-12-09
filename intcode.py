@@ -1,7 +1,8 @@
+from dataclasses import dataclass
+from defaultlist import defaultlist
 from enum import Enum
 import copy
 import unittest
-from dataclasses import dataclass
 
 @dataclass
 class Op:
@@ -35,6 +36,7 @@ class Opcode(int, Enum):
     JUMP_IF_FALSE   = (6,  Op(args=2)),
     LESS_THAN       = (7,  Op(args=3, posArgs=1)),
     EQUALS          = (8,  Op(args=3, posArgs=1)),
+    ADJUST_RELBASE  = (9,  Op(args=1)),
     END             = (99, Op()),
 
     def __new__(cls, arg):
@@ -50,10 +52,12 @@ class ParameterMode(Enum):
 
     POSITION: parameter is an address
     IMMEDIATE: parameter is an integer value
+    RELATIVE: parameter is relative to the 'relative base'
     """
 
     POSITION = 0
     IMMEDIATE = 1
+    RELATIVE = 2
 
 class IntcodeSim:
     """
@@ -78,22 +82,28 @@ class IntcodeSim:
                             values will be pulled from there first)
         :attribute outputFn: If set, will be called with a single integer argument for
                              for each output value. Values will also be added to 'outputs'
+        :attribute relativeBase: the base address for RELATIVE-mode instructions
         """
 
         # Allow a string to be passed, for convenience
         if isinstance(code, str):
             code = self.split(code)
-        else:
-            # We will modify this list, so copy it
-            code = copy.copy(code)
 
-        self.arr = code
+        # The array needs to support large memory, so we use defaultlist to
+        # automatically create new items with value 0
+        # XXX: negative memory positions should raise an error if accessed,
+        #      but currently we follow Python semantics
+        self.arr = defaultlist(lambda: 0)
+        for i in range(len(code)):
+            self.arr[i] = code[i]
+
         self.pos = 0
         self.finished = False
         self.queuedInputs = []
         self.outputs = []
         self.inputFn = None
         self.outputFn = None
+        self.relativeBase = 0
 
     def queueInput(self, value):
         """
@@ -155,7 +165,7 @@ class IntcodeSim:
         fullOpcode //= 100
 
         parameterModes = []
-        for v in range(0, opcode.op.inputs()):
+        for v in range(0, opcode.op.args):
             parameterModes.append(ParameterMode(fullOpcode % 10))
             fullOpcode //= 10
 
@@ -185,12 +195,37 @@ class IntcodeSim:
             value = self.arr[self.pos]
             self.pos += 1
 
-            # posArgs are always treated as immediate
-            if i < opcode.op.inputs() and \
-                parameterModes[i] == ParameterMode.POSITION:
-                args.append( self.arr[value] )
+            mode = parameterModes[i]
+
+            # Output arguments are left as addresses, which we look up in
+            # self.arr later when executing the instruction
+            if i >= opcode.op.inputs():
+                if mode == ParameterMode.IMMEDIATE:
+                    raise ValueError("output address arguments cannot be in immediate mode")
+
+                elif mode == ParameterMode.POSITION:
+                    args.append(value)
+
+                elif mode == ParameterMode.RELATIVE:
+                    args.append(value + self.relativeBase)
+
+                else:
+                    raise ValueError("invalid parameter mode")
+
+            # Input arguments are resolved completely before executing the
+            # instruction.
             else:
-                args.append( value )
+                if mode == ParameterMode.IMMEDIATE:
+                    args.append( value )
+
+                elif mode == ParameterMode.POSITION:
+                    args.append( self.arr[value] )
+
+                elif mode == ParameterMode.RELATIVE:
+                    args.append( self.arr[value + self.relativeBase] )
+
+                else:
+                    raise ValueError("invalid parameter mode")
 
         # Execute opcode
         if opcode == Opcode.ADD:
@@ -218,6 +253,9 @@ class IntcodeSim:
 
         elif opcode == Opcode.EQUALS:
             self.arr[args[2]] = 1 if args[0] == args[1] else 0
+
+        elif opcode == Opcode.ADJUST_RELBASE:
+            self.relativeBase += args[0]
 
         elif opcode == Opcode.END:
             self.finished = True
@@ -333,3 +371,30 @@ class TestQ7(unittest.TestCase):
             i.outputFn = capture
             i.run()
             self.assertEqual(capture.output, test["output"], str(test["input"]))
+
+class TestQ9(unittest.TestCase):
+    def test_quine(self):
+        code = [109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99]
+        i = IntcodeSim(code).run()
+        self.assertEqual(i.outputs, code, 'made a copy of itself')
+
+    def test_large_numbers(self):
+        i = IntcodeSim([1102,34915192,34915192,7,4,7,99,0]).run()
+        self.assertEqual(i.outputs, [1219070632396864], 'multiply large number')
+
+        i = IntcodeSim([104,1125899906842624,99]).run()
+        self.assertEqual(i.outputs, [1125899906842624], 'output large number')
+
+    def test_203(self):
+        "test 203 instruction as this is apparently broken"
+        # takes integer as input, saves it to position of only parameter
+        # this parameter is in relative mode.
+        # "Parameters that an instruction writes to will never be in immediate mode."
+
+        # Test program: sets relativeBase to 10, reads input in relative mode to pos 0
+        # (= pos 10), outputs it and exits
+        i = IntcodeSim([109,10,203,0,4,10,99])
+        i.queueInput(42)
+        i.run()
+        self.assertEqual(i.relativeBase, 10)
+        self.assertEqual(i.outputs, [42])
