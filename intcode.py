@@ -1,4 +1,4 @@
-from enum import Enum, IntEnum
+from enum import Enum
 import copy
 import unittest
 from dataclasses import dataclass
@@ -44,7 +44,7 @@ class Opcode(int, Enum):
         obj.op = op
         return obj
 
-class ParameterMode(IntEnum):
+class ParameterMode(Enum):
     """
     Represents a parameter mode: how a parameter should be interpreted.
 
