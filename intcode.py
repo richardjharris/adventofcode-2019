@@ -318,3 +318,18 @@ class TestQ5(unittest.TestCase):
         i.queueInput(5)
         i.run()
         self.assertEqual(i.outputs, [14340395])
+
+class TestQ7(unittest.TestCase):
+    def test_input_output_fn(self):
+        tests = [
+            {"input": 8, "output": 1},
+            {"input": 7, "output": 0},
+        ]
+        for test in tests:
+            i = IntcodeSim("3,3,1108,-1,8,3,4,3,99")
+            i.inputFn = lambda: test["input"]
+            def capture(value):
+                capture.output = value
+            i.outputFn = capture
+            i.run()
+            self.assertEqual(capture.output, test["output"], str(test["input"]))
