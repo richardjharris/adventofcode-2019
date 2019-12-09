@@ -54,11 +54,6 @@ def matchesCriteria2(number):
 
     return True
 
-# let's try again but faster
-def findMatchingNumbers(start, end):
-    # Go over prefix?
-
-
 # Quick tests
 #print matchesCriteria(111111)  # true
 #print matchesCriteria(223450)  # false (decreasing pair 50)
