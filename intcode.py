@@ -1,6 +1,6 @@
 from dataclasses import dataclass
-from defaultlist import defaultlist
 from enum import Enum
+from intcode_memory import IntcodeMemory
 import copy
 import unittest
 
@@ -89,13 +89,9 @@ class IntcodeSim:
         if isinstance(code, str):
             code = self.split(code)
 
-        # The array needs to support large memory, so we use defaultlist to
-        # automatically create new items with value 0
-        # XXX: negative memory positions should raise an error if accessed,
-        #      but currently we follow Python semantics
-        self.arr = defaultlist(lambda: 0)
-        for i in range(len(code)):
-            self.arr[i] = code[i]
+        # List subclass that extends to infinite size and forbids negative element
+        # access.
+        self.arr = IntcodeMemory(code)
 
         self.pos = 0
         self.finished = False
