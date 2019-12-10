@@ -1,10 +1,8 @@
-from copy import copy
 from collections import defaultdict
-from decimal import *
-from util import slurp, manhattanDistance, gcd
+from decimal import Decimal
+from util import slurp
 import math
 import unittest
-import sys
 
 def clean(string):
     "strip trailing and leading spaces from all lines and remove empty lines"
