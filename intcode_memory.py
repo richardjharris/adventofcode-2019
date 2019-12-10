@@ -36,7 +36,7 @@ class IntcodeMemory(list):
             return list.__getitem__(self, index)
 
     def __add__(self, other):
-        if instance(other, list):
+        if isinstance(other, list):
             r = self.copy()
             r += other
             return r
