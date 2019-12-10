@@ -12,3 +12,14 @@ def slurp(filename):
     "read contents of filename into a string and return"
     with open(filename, 'r') as fh:
         return fh.read().rstrip('\n')
+
+def manhattanDistance(a, b):
+    return abs(a[0] - b[0]) + abs(a[1] - b[1])
+
+def gcd(a, b):
+    while b:
+        a, b = b, a % b
+    return a
+
+def lcm(a,b):
+    return abs(a*b) // gcd(a,b)
