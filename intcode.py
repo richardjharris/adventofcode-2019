@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
 from intcode_memory import IntcodeMemory
-import copy
 import unittest
 
 @dataclass
@@ -142,7 +141,7 @@ class IntcodeSim:
     
     @staticmethod
     def split(string):
-        """ 
+        """
         Converts CSV intcode to a list of integers.
         """
         return list([int(x) for x in string.split(',')])
