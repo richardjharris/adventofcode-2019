@@ -56,7 +56,7 @@ def runIntcode(arr):
 # exampleIntcode = "1,1,1,4,99,5,6,0,99"
 
 def part1():
-    intcode = loadInput('q2_input')
+    intcode = loadInput('inputs/q02')
     # Patch code as directed
     intcode[1] = 12
     intcode[2] = 2
@@ -68,7 +68,7 @@ def part2():
     targetOutput = 19690720
     for input1 in xrange(0,99):
         for input2 in xrange(0,99):
-            intcode = loadInput('q2_input')
+            intcode = loadInput('inputs/q02')
             intcode[1] = input1
             intcode[2] = input2
             result = runIntcode(intcode)

@@ -8,7 +8,7 @@ def part1():
     find layer with smallest number of zeros
     return number of 1s * number of 2s
     """
-    image = slurp('q8_input')
+    image = slurp('inputs/q08')
     width, height = 25, 6
     layers = split_every(width * height, image)
     fewestZeroLayer = min(layers, key=lambda l: l.count('0'))
@@ -20,7 +20,7 @@ def part2():
     0 = black, 1 = white, 2 = transparent
     therefore black/white overlap everything, and transparent overlaps nothing
     """
-    image = slurp('q8_input')
+    image = slurp('inputs/q08')
     width, height = 25, 6
     combined = combineLayers(image, width, height)
     print(layerToImage(combined, width))

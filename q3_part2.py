@@ -51,5 +51,5 @@ print findQuickestIntersection(
 )
 
 # 107036
-lines = open('q3_input', 'r').readlines()
+lines = open('inputs/q03', 'r').readlines()
 print findQuickestIntersection(*lines)

@@ -1,5 +1,5 @@
 import math
-inputs = open('q1_input', 'r').readlines()
+inputs = open('inputs/q01', 'r').readlines()
 
 def fuelCalc(value):
     return int(math.floor(int(value) / 3) - 2)

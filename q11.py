@@ -21,7 +21,7 @@ MOVEMENT = {
     Direction.down: (0, 1),
 }
 
-code = slurp('q11_input')
+code = slurp('inputs/q11')
 i = IntcodeSim(code)
 
 # Robot position

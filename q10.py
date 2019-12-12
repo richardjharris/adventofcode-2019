@@ -234,7 +234,7 @@ class TestQ10(unittest.TestCase):
         self.assertEqual(findBestLocation(test), { 'detected': 210, 'position': (11, 13) })
 
     def test_part1(self):
-        test = slurp('q10_input')
+        test = slurp('inputs/q10')
         self.assertEqual(findBestLocation(test), { 'detected': 269, 'position': (13, 17) })
 
     def test_destroy_basic(self):
@@ -305,7 +305,7 @@ class TestQ10(unittest.TestCase):
         self.assertEqual(len(destroyed), 299)
 
     def test_part2(self):
-        test = slurp('q10_input')
+        test = slurp('inputs/q10')
         destroyed = destroyAsteroids(test)
         number200 = destroyed[199]
         self.assertEqual(number200, (6, 12))

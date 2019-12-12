@@ -7,14 +7,14 @@ def part1():
     """
     Open the Q7 input and calculate the max signal in serial mode
     """
-    code = open('q7_input', 'r').read().rstrip('\n')
+    code = open('inputs/q07', 'r').read().rstrip('\n')
     print(findMaxSignalPart1(code))
 
 def part2():
     """
     Open the Q7 input and calculate the max signal in feedback mode
     """
-    code = open('q7_input', 'r').read().rstrip('\n')
+    code = open('inputs/q07', 'r').read().rstrip('\n')
     print(findMaxSignalPart2(code))
 
 def findMaxSignalPart1(code):

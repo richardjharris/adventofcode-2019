@@ -103,5 +103,5 @@ def minimumTransfersRequired(graph):
     # This is two transfers (A->B, B->C)  so we need to remove 3 from the total
     return len(route) - 3
 
-graph = loadOrbits("q6_input")
+graph = loadOrbits("inputs/q06")
 print(minimumTransfersRequired(graph))

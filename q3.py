@@ -42,7 +42,7 @@ def run(filename):
     print c
     print d
 
-run("q3_ex0")
-run("q3_ex1")
-run("q3_ex2")
-run("q3_input")
+run("inputs/q03_ex0")
+run("inputs/q03_ex1")
+run("inputs/q03_ex2")
+run("inputs/q03")
