@@ -60,6 +60,13 @@ def part1(wire_strings: Iterable[str]) -> int:
 
 
 class TestQ3(unittest.TestCase):
+    def test_part1_basic(self):
+        wires = [
+            "R8,U5,L5,D3",
+            "U7,R6,D4,L4",
+        ]
+        self.assertEqual(part1(wires), 6)
+
     def test_part1_example1(self):
         wires = [
             "R75,D30,R83,U83,L12,D49,R71,U7,L72",
