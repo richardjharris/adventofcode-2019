@@ -1,50 +1,51 @@
-inputRange = xrange(145852, 616942 + 1)
+"Day 4 - Secure Container"
+import unittest
 
-"""
-input is:
- - 6-digit number
- - within inputRange
- - two adjacent digits are the same
- - digits never decrease
-"""
-
-def matchesCriteria(number):
-    """ checks rules 3 and 4 on number. assumes rules 1+2 met """
+def matches_criteria(number: int) -> int:
+    """
+    given a six digit number, returns true if it matches the criteria:
+     - two adjacent digits are the same
+     - going from left to right, the digits never decrease
+    """
     twoAdjacent = False
-    lastDigit = None
+    prevDigit = None
     for digit in str(number):
-        if lastDigit is None:
+        if prevDigit is None:
             pass
         else:
-            if int(lastDigit) > int(digit):
+            if int(prevDigit) > int(digit):
                 return False
-            elif int(lastDigit) == int(digit):
+            elif int(prevDigit) == int(digit):
                 twoAdjacent = True
-        lastDigit = digit
+        prevDigit = digit
 
     if not twoAdjacent:
         return False
 
     return True
 
-def matchesCriteria2(number):
-    """ modified version which does not allow a group of 3+ digits """
+
+def matches_criteria_two(number: int) -> int:
+    """
+    as matchesCriteria, except requires the two adjacent matching digits
+    to NOT be a part of a larger group of matching digits
+    """
     currentChainLength = 0
     twoAdjacentFound = False
-    lastDigit = None
+    prevDigit = None
     for digit in str(number):
-        if lastDigit is None:
+        if prevDigit is None:
             pass
         else:
-            if int(lastDigit) > int(digit):
+            if int(prevDigit) > int(digit):
                 return False
-            elif int(lastDigit) == int(digit):
+            elif int(prevDigit) == int(digit):
                 currentChainLength += 1
             else:
                 if currentChainLength == 1:
                     twoAdjacentFound = True
                 currentChainLength = 0
-        lastDigit = digit
+        prevDigit = digit
 
     if currentChainLength == 1:
         twoAdjacentFound = True
@@ -54,14 +55,30 @@ def matchesCriteria2(number):
 
     return True
 
-# Quick tests
-#print matchesCriteria(111111)  # true
-#print matchesCriteria(223450)  # false (decreasing pair 50)
-#print matchesCriteria(123789)  # false (no double)
 
-print matchesCriteria2(112233)  # true
-print matchesCriteria2(123444)  # false (triplet)
-print matchesCriteria2(111122)  # true (four 1s, but double also)
+class TestQ4(unittest.TestCase):
+    def test_matches1(self):
+        self.assertEqual(matches_criteria(111111), True)
+        self.assertEqual(matches_criteria(111123), True)
+        self.assertEqual(matches_criteria(122345), True)
+        self.assertEqual(matches_criteria(223450), False, 'decreasing pair')
+        self.assertEqual(matches_criteria(123789), False, 'no double')
 
-#print len(filter(matchesCriteria, inputRange))
-print len(filter(matchesCriteria2, inputRange))
+
+    def test_matches2(self):
+        self.assertEqual(matches_criteria_two(112233), True)
+        self.assertEqual(matches_criteria_two(123444), False, 'triplet')
+        self.assertEqual(matches_criteria_two(111122), True, 'four 1s, but also double')
+
+
+    input_range = range(145852, 616942 + 1)
+
+    def test_part1(self):
+        # The input range are all 6-digit numbers, so no need to test that.
+        matched = sum(1 for i in self.input_range if matches_criteria(i))
+        self.assertEqual(matched, 1767)
+
+
+    def test_part2(self):
+        matched = sum(1 for i in self.input_range if matches_criteria_two(i))
+        self.assertEqual(matched, 1192)
