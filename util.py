@@ -18,7 +18,7 @@ def read_lines(filename):
     with open(filename, 'r') as fh:
         return fh.readlines()
 
-def manhattanDistance(a, b):
+def manhattan_distance(a, b):
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
 def gcd(a, b):
