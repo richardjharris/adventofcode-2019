@@ -13,6 +13,11 @@ def slurp(filename):
     with open(filename, 'r') as fh:
         return fh.read().rstrip('\n')
 
+def read_lines(filename):
+    "read contents of filename as a list of lines"
+    with open(filename, 'r') as fh:
+        return fh.readlines()
+
 def manhattanDistance(a, b):
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
 

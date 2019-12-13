@@ -1,31 +1,59 @@
+"Day 1 - The Tyranny of the Rocket Equation"
 import math
-inputs = open('inputs/q01', 'r').readlines()
+import unittest
+from typing import Callable
+from util import read_lines
 
-def fuelCalc(value):
+def fuel_calc(value: int) -> int:
+    """
+    fuel calculation used in both solution parts
+    """
     return int(math.floor(int(value) / 3) - 2)
 
-def recursiveFuelCalc(value):
+
+def recursive_fuel_calc(value: int) -> int:
+    """
+    Like fuelCalc, except also consider the fuel required to generate
+    mass ALSO requires fuel of its own. Return the total fuel required.
+    """
     total = 0
     while True:
-        value = fuelCalc(value)
+        value = fuel_calc(value)
         if value < 0:
             break
         total += value
     return total
 
-""" calculate fuel by mass/3 (rounded down) - 2, for all modules """
-def part1():
-    totalFuel = 0
-    for mass in inputs:
-        fuel = fuelCalc(mass)
-        totalFuel += fuel
-    print(totalFuel)
 
-""" same as above, but recurse on the result until we get 0 or negative """
-def part2():
-    totalFuel = 0
-    for mass in inputs:
-        totalFuel += recursiveFuelCalc(mass)
-    print(totalFuel)
+def total_fuel(input_file: str, fuel: Callable[[int], int] = fuel_calc) -> int:
+    """
+    for all modules in input, return the mass required to launch them
+    using the specified calculation
+    """
+    inputs = read_lines(input_file)
+    return sum(fuel(int(mass)) for mass in inputs)
 
-part2()
+
+class TestQ1(unittest.TestCase):
+    def test_fuel_calc(self):
+        "examples from Part 1"
+        self.assertEqual(fuel_calc(12), 2)
+        self.assertEqual(fuel_calc(14), 2)
+        self.assertEqual(fuel_calc(1969), 654)
+        self.assertEqual(fuel_calc(100756), 33583)
+
+    def test_part1(self):
+        "Part 1 solution"
+        self.assertEqual(total_fuel("inputs/q01"), 3231195)
+
+    def test_recursive_fuel_calc(self):
+        "examples from Part 2"
+        self.assertEqual(recursive_fuel_calc(14), 2)
+        self.assertEqual(recursive_fuel_calc(1969), 966)
+        self.assertEqual(recursive_fuel_calc(100756), 50346)
+
+    def test_part2(self):
+        "Part 2 solution"
+        self.assertEqual(
+            total_fuel("inputs/q01", fuel=recursive_fuel_calc),
+            4843929)
