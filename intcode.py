@@ -100,6 +100,12 @@ class IntcodeSim:
         self.outputFn = None
         self.relativeBase = 0
 
+    def setMemory(self, position, value):
+        "functional interface to setting the memory"
+        if not isinstance(value, int):
+            raise f"setMemory: '{value}' must be an int"
+        self.arr[position] = value
+
     def queueInput(self, value):
         """
         Queues an input value, which will be used (FIFO) when the intcode
