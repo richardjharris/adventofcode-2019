@@ -1,12 +1,13 @@
+'Day 10 - Monitoring Station'
+import math
+import unittest
 from collections import defaultdict
 from decimal import Decimal
 from util import slurp
-import math
-import unittest
 
 def clean(string):
     "strip trailing and leading spaces from all lines and remove empty lines"
-    return "\n".join(line.strip() for line in string.strip().split('\n'))    
+    return "\n".join(line.strip() for line in string.strip().split('\n'))
 
 def findAsteroids(mapString):
     """
@@ -21,7 +22,7 @@ def findAsteroids(mapString):
     for y in range(height):
         for x in range(width):
             if grid[y][x] == '#':
-                asteroids.add((x,y))
+                asteroids.add((x, y))
 
     return asteroids
 
