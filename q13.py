@@ -109,7 +109,8 @@ def part2():
                 state.ballPos = (x, y)
 
             state.step += 1
-            # Have we rendered the initial screen?
+            # Wait for the machine to output the whole screen once
+            # before we start rendering
             if state.step > 900:
                 print(screen.render())
                 print("Score: " + str(state.score))
