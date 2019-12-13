@@ -1,80 +1,53 @@
-from enum import IntEnum
-import sys
-import copy
+"Day 2 - 1202 Program Alarm"
+from typing import Optional, Tuple
+import unittest
 
-class Opcode(IntEnum):
-    add = 1
-    mul = 2
-    end = 99
+from intcode import IntcodeSim
+from util import slurp
 
-def loadInput(filename):
-    """ load input filename into list of integers """
-    arr = []
-    with open(filename, 'r') as f:
-        for line in f:
-            arr += splitIncodeLine(line)
-    return arr
-
-def splitIncodeLine(string):
-    """ split a string and return its integer components as a list """
-    return list([int(x) for x in string.split(',')])
-
-def runIntcode(arr):
-    """ execute intcode from array of integers """
-    pos = 0
-    exiting = False
-    # We're going to overwrite arr, so copy it
-    arr = copy.copy(arr)
-    while not exiting:
-        op = arr[pos]
-        if op == Opcode.add:
-            inputPos1 = arr[pos+1]
-            inputPos2 = arr[pos+2]
-            outputPos = arr[pos+3]
-            pos += 4
-
-            arr[outputPos] = arr[inputPos1] + arr[inputPos2]
-
-        elif op == Opcode.mul:
-            inputPos1 = arr[pos+1]
-            inputPos2 = arr[pos+2]
-            outputPos = arr[pos+3]
-            pos += 4
-
-            arr[outputPos] = arr[inputPos1] * arr[inputPos2]
-
-        elif op == Opcode.end:
-            exiting = True
-        else:
-            print "unknown opcode: " + str(op)
-            exiting = True
-
-    # Return output state
-    return arr
-
-# exampleIntcode = "1,9,10,3,2,3,11,0,99,30,40,50"
-# exampleIntcode = "1,1,1,4,99,5,6,0,99"
-
-def part1():
-    intcode = loadInput('inputs/q02')
+def part1(filename: str) -> int:
+    """
+    Runs the intcode at filename, patching as directed,
+    and returns the value at memory position 0
+    """
+    i = IntcodeSim.fromFile(filename)
     # Patch code as directed
-    intcode[1] = 12
-    intcode[2] = 2
+    i.arr[1] = 12
+    i.arr[2] = 2
+    i.run()
+    return i.arr[0]
 
-    print runIntcode(intcode)
+def part2(filename: str, target_output: int) -> Optional[Tuple[int, int]]:
+    """
+    Determine the values of memory position 0 + 1 which will result in the
+    target output.
+    """
+    code = slurp(filename)
 
-def part2():
-    """ figure out the inputs required to generate an specified output """
-    targetOutput = 19690720
-    for input1 in xrange(0,99):
-        for input2 in xrange(0,99):
-            intcode = loadInput('inputs/q02')
-            intcode[1] = input1
-            intcode[2] = input2
-            result = runIntcode(intcode)
-            if result[0] == targetOutput:
-                print "Got result with input1=" + str(input1) + " input2=" + str(input2)
-                print "Answer code = " + str(input1 * 100 + input2)
-                sys.exit(0)
+    # The solution requires us to return 100 * noun + verb. Therefore it's a
+    # good bet that both noun and verb are positive and have a maximum of two
+    # digits.
+    for noun in range(100):
+        for verb in range(100):
+            i = IntcodeSim(code)
+            i.arr[1] = noun
+            i.arr[2] = verb
+            i.run()
+            if i.arr[0] == target_output:
+                return noun, verb
 
-part2()
+    return None
+
+class TestQ2(unittest.TestCase):
+    """
+    Tests for the Q2 solution.
+    The examples are already in the intcode.py test suite.
+    """
+    def test_part1(self):
+        value = part1("inputs/q02")
+        self.assertEqual(value, 2782414)
+
+    def test_part2(self):
+        noun, verb = part2("inputs/q02", 19690720)
+        self.assertEqual(noun, 98)
+        self.assertEqual(verb, 20)
