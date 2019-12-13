@@ -1,19 +1,19 @@
+"Day 9 - Sensor Boost"
+import unittest
 from intcode import IntcodeSim
-from util import slurp
 
-def part1():
-    boost = slurp('inputs/q09')
-    # Run in test mode using input 1
-    i = IntcodeSim(boost)
-    i.queueInput(1)
-    i.run()
-    print(i.outputs)
+class TestQ9(unittest.TestCase):
+    def test_part1(self):
+        i = IntcodeSim.fromFile('inputs/q09')
+        # Run in test mode using input 1
+        i.queueInput(1).run()
+        i.run()
+        self.assertEqual(i.outputs, [3345854957])
 
-def part2():
-    boost = slurp('inputs/q09')
-    # Run in sensor boost mode with a value of 2
-    i = IntcodeSim(boost).queueInput(2).run()
-    print(i.outputs)
 
-part2()
-
+    def test_part2(self):
+        i = IntcodeSim.fromFile('inputs/q09')
+        # Run in test mode using input 1
+        i.queueInput(2).run()
+        i.run()
+        self.assertEqual(i.outputs, [68938])
