@@ -5,9 +5,11 @@ from collections import defaultdict
 from decimal import Decimal
 from util import slurp
 
+
 def clean(string):
     "strip trailing and leading spaces from all lines and remove empty lines"
     return "\n".join(line.strip() for line in string.strip().split('\n'))
+
 
 def findAsteroids(mapString):
     """
@@ -25,6 +27,7 @@ def findAsteroids(mapString):
                 asteroids.add((x, y))
 
     return asteroids
+
 
 def findBestLocation(mapString):
     """
@@ -48,9 +51,10 @@ def findBestLocation(mapString):
         detected = len(seen)
 
         if best is None or best['detected'] < detected:
-            best = { 'detected': detected, 'position': src }
+            best = {'detected': detected, 'position': src}
 
     return best
+
 
 def destroyAsteroids(mapString):
     """
@@ -78,7 +82,8 @@ def destroyAsteroids(mapString):
     destroyed = []
     while asteroids:
         for angle in sorted(byAngle):
-            # Destroy the asteroid with the smallest distance for each given angle
+            # Destroy the asteroid with the smallest distance for each given
+            # angle
             if byAngle[angle]:
                 closest = min(byAngle[angle], key=lambda x: x[1])
                 byAngle[angle].remove(closest)
@@ -87,11 +92,14 @@ def destroyAsteroids(mapString):
 
     return destroyed
 
+
 def vectorLength(u):
-    return math.sqrt(u[0]*u[0] + u[1]*u[1])
+    return math.sqrt(u[0] * u[0] + u[1] * u[1])
+
 
 def vectorDotProduct(u, v):
     return u[0] * v[0] + u[1] * v[1]
+
 
 def clockwiseAngle(v, precision=10):
     """
@@ -114,7 +122,7 @@ def clockwiseAngle(v, precision=10):
     # We know u is pointing up. If v is negative (left side of the clock)
     # convert the angle from counter-clockwise to clockwise
     if v[0] < 0:
-        angle = 2*math.pi - angle
+        angle = 2 * math.pi - angle
 
     # Turn into degrees for ease of debugging
     angle = math.degrees(angle)
@@ -129,13 +137,14 @@ def clockwiseAngle(v, precision=10):
 
     return angle
 
+
 class TestQ10(unittest.TestCase):
     def test_vector(self):
-        self.assertEqual(vectorLength((math.sqrt(2),math.sqrt(2))), 2.0)
-        self.assertEqual(vectorLength((0,3)), 3.0)
-        self.assertEqual(vectorLength((0,-3)), 3.0)
+        self.assertEqual(vectorLength((math.sqrt(2), math.sqrt(2))), 2.0)
+        self.assertEqual(vectorLength((0, 3)), 3.0)
+        self.assertEqual(vectorLength((0, -3)), 3.0)
 
-        self.assertEqual(vectorDotProduct((2,2), (0,3)), 6)
+        self.assertEqual(vectorDotProduct((2, 2), (0, 3)), 6)
 
     def test_clean(self):
         self.assertEqual(clean("""
@@ -151,7 +160,10 @@ class TestQ10(unittest.TestCase):
         #..#..#
         ...#...
         """)
-        self.assertEqual(findBestLocation(test), { 'detected': 4, 'position': (3, 2) })
+        self.assertEqual(
+            findBestLocation(test), {
+                'detected': 4, 'position': (
+                    3, 2)})
 
     def test_example1(self):
         "first example in question spec"
@@ -162,7 +174,10 @@ class TestQ10(unittest.TestCase):
         ....#
         ...##
         """)
-        self.assertEqual(findBestLocation(test), { 'detected': 8, 'position': (3, 4) })
+        self.assertEqual(
+            findBestLocation(test), {
+                'detected': 8, 'position': (
+                    3, 4)})
 
     def test_large_example1(self):
         test = clean("""
@@ -177,7 +192,10 @@ class TestQ10(unittest.TestCase):
 ##...#..#.
 .#....####
         """)
-        self.assertEqual(findBestLocation(test), { 'detected': 33, 'position': (5, 8) })
+        self.assertEqual(
+            findBestLocation(test), {
+                'detected': 33, 'position': (
+                    5, 8)})
 
     def test_large_example2(self):
         test = clean("""
@@ -192,7 +210,10 @@ class TestQ10(unittest.TestCase):
 ......#...
 .####.###.
         """)
-        self.assertEqual(findBestLocation(test), { 'detected': 35, 'position': (1, 2) })
+        self.assertEqual(
+            findBestLocation(test), {
+                'detected': 35, 'position': (
+                    1, 2)})
 
     def test_large_example3(self):
         test = clean("""
@@ -207,7 +228,10 @@ class TestQ10(unittest.TestCase):
 .##...##.#
 .....#.#..
         """)
-        self.assertEqual(findBestLocation(test), { 'detected': 41, 'position': (6, 3) })
+        self.assertEqual(
+            findBestLocation(test), {
+                'detected': 41, 'position': (
+                    6, 3)})
 
     def test_large_example4(self):
         test = clean("""
@@ -232,11 +256,17 @@ class TestQ10(unittest.TestCase):
 #.#.#.#####.####.###
 ###.##.####.##.#..##
         """)
-        self.assertEqual(findBestLocation(test), { 'detected': 210, 'position': (11, 13) })
+        self.assertEqual(
+            findBestLocation(test), {
+                'detected': 210, 'position': (
+                    11, 13)})
 
     def test_part1(self):
         test = slurp('inputs/q10')
-        self.assertEqual(findBestLocation(test), { 'detected': 269, 'position': (13, 17) })
+        self.assertEqual(
+            findBestLocation(test), {
+                'detected': 269, 'position': (
+                    13, 17)})
 
     def test_destroy_basic(self):
         test = clean("""
@@ -244,11 +274,14 @@ class TestQ10(unittest.TestCase):
             ####
             .#..
         """)
-        self.assertEqual(findBestLocation(test), { 'detected': 4, 'position': (1,2) })
+        self.assertEqual(
+            findBestLocation(test), {
+                'detected': 4, 'position': (
+                    1, 2)})
         self.assertEqual(destroyAsteroids(test), [
-            (1,1), (2,1), (3,1), (0,1), (1,0)
+            (1, 1), (2, 1), (3, 1), (0, 1), (1, 0)
         ])
-    
+
     def test_destroy_example1(self):
         test = clean("""
 .#....#####...#..
@@ -259,13 +292,13 @@ class TestQ10(unittest.TestCase):
 """)
         destroyed = destroyAsteroids(test)
         self.assertEqual(destroyed[0:9], [
-            (8,1), (9,0), (9,1), (10,0), (9,2), (11,1), (12,1), (11,2), (15,1)
+            (8, 1), (9, 0), (9, 1), (10, 0), (9, 2), (11, 1), (12, 1), (11, 2), (15, 1)
         ])
         self.assertEqual(destroyed[9:18], [
-            (12,2), (13,2), (14,2), (15,2), (12,3), (16,4), (15,4), (10,4), (4,4)
+            (12, 2), (13, 2), (14, 2), (15, 2), (12, 3), (16, 4), (15, 4), (10, 4), (4, 4)
         ])
         self.assertEqual(destroyed[18:27], [
-            (2,4), (2,3), (0,2), (1,2), (0,1), (1,1), (5,2), (1,0), (5,1)
+            (2, 4), (2, 3), (0, 2), (1, 2), (0, 1), (1, 1), (5, 2), (1, 0), (5, 1)
         ])
 
     def test_destroy_example2(self):
@@ -292,17 +325,17 @@ class TestQ10(unittest.TestCase):
 ###.##.####.##.#..##
         """)
         destroyed = destroyAsteroids(test)
-        self.assertEqual(destroyed[0], (11,12))
-        self.assertEqual(destroyed[1], (12,1))
-        self.assertEqual(destroyed[2], (12,2))
-        self.assertEqual(destroyed[9], (12,8))
-        self.assertEqual(destroyed[19], (16,0))
-        self.assertEqual(destroyed[49], (16,9))
-        self.assertEqual(destroyed[99], (10,16))
-        self.assertEqual(destroyed[198], (9,6))
-        self.assertEqual(destroyed[199], (8,2))
-        self.assertEqual(destroyed[200], (10,9))
-        self.assertEqual(destroyed[298], (11,1))
+        self.assertEqual(destroyed[0], (11, 12))
+        self.assertEqual(destroyed[1], (12, 1))
+        self.assertEqual(destroyed[2], (12, 2))
+        self.assertEqual(destroyed[9], (12, 8))
+        self.assertEqual(destroyed[19], (16, 0))
+        self.assertEqual(destroyed[49], (16, 9))
+        self.assertEqual(destroyed[99], (10, 16))
+        self.assertEqual(destroyed[198], (9, 6))
+        self.assertEqual(destroyed[199], (8, 2))
+        self.assertEqual(destroyed[200], (10, 9))
+        self.assertEqual(destroyed[298], (11, 1))
         self.assertEqual(len(destroyed), 299)
 
     def test_part2(self):
@@ -310,4 +343,3 @@ class TestQ10(unittest.TestCase):
         destroyed = destroyAsteroids(test)
         number200 = destroyed[199]
         self.assertEqual(number200, (6, 12))
-
