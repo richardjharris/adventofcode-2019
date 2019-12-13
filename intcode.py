@@ -263,6 +263,7 @@ class IntcodeSim:
         else:
             raise ValueError("unknown opcode: " + opcode)
 
+
 class TestQ2(unittest.TestCase):
     """ tests from Advent Calendar question 2 """
     def test_basic(self):
@@ -284,31 +285,13 @@ class TestQ2(unittest.TestCase):
         i = IntcodeSim("1,9,10,3,2,3,11,0,99,30,40,50").run()
         self.assertEqual(i.arr, [3500,9,10,70,2,3,11,0,99,30,40,50])
 
-    def test_puzzle_part1(self):
-        i = IntcodeSim.fromFile("q2_input")
-        i.arr[1] = 12
-        i.arr[2] = 2
-        i.run()
-        self.assertEqual(i.arr[0], 2782414)
-
-    def test_puzzle_part2(self):
-        i = IntcodeSim.fromFile("q2_input")
-        i.arr[1] = 98
-        i.arr[2] = 20
-        i.run()
-        self.assertEqual(i.arr[0], 19690720)
 
 class TestQ5(unittest.TestCase):
-    """ tests from Advent Calendar question 4 """
+    """ tests from Advent Calendar question 5 """
     def test_param_modes(self):
         # 1002 = 02 (multiplication) with arg 0 in position mode, arg 1 in intermediate
         i = IntcodeSim("1002,4,3,4,33").run()
         self.assertEqual(i.arr[4], 99)
-
-    def test_puzzle_part1(self):
-        i = IntcodeSim.fromFile("q5_input").queueInput(1).run()
-        self.assertEqual(i.outputs[-1], 7692125, 'correct diagnostic code')
-        self.assertTrue(all(x == 0 for x in i.outputs[1:-2]), 'all other outputs are 0')
 
     def test_jump_positional(self):
         for number in range(-10,10):
@@ -352,11 +335,6 @@ class TestQ5(unittest.TestCase):
         self.assertEqual(run(8), 1000)
         self.assertEqual(run(9), 1001)
 
-    def test_puzzle_part2(self):
-        i = IntcodeSim.fromFile("q5_input")
-        i.queueInput(5)
-        i.run()
-        self.assertEqual(i.outputs, [14340395])
 
 class TestQ7(unittest.TestCase):
     def test_input_output_fn(self):
