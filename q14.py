@@ -1,5 +1,6 @@
 'Day 14 - Space Stoichiometry'
 import collections
+import copy
 import dataclasses
 import math
 import unittest
@@ -28,6 +29,15 @@ class Formula():
     produces: Quantity
 
 
+class Stock(collections.defaultdict):
+    def __init__(self, *args, **kwargs):
+        super(Stock, self).__init__(*args, **kwargs)
+        self.default_factory = int
+
+    def __repr__(self):
+        return "Stock(" + ", ".join(f"{key} {self[key]}" for key in self.keys()) + ")"
+
+
 def parse_formulas(strings):
     """
     Given formula strings, return dict mapping each chemical to
@@ -48,37 +58,49 @@ def parse_formulas(strings):
     return formulae
     
 
-def solve_reactions(strings):
+def ore_needed(strings, target_fuel=1):
     """
     Given formula strings such as '10 ORE => 10 A', '1 A => 1 FUEL'
-    Returns the amount of ORE required to generate 1 unit of FUEL
+    Returns the amount of ORE required to generate target units of FUEL
 
-    This is done recursively, keeping track of any unused chemicals
-    in a 'stock', which can be used in other reactions.
+    This is done by representing the stock as a balance sheet and applying
+    formulas to make negative numbers into positive ones. We multiply the
+    formula to do it as much as possible, then correct any surplus afterwards,
+    until we cannot perform any more formulas.
     """
     f = parse_formulas(strings)
 
     # Track how much we have of each chemical
-    stock = collections.defaultdict(lambda: 0)
+    stock = Stock()
 
-    # Recursively count the ORE required, starting by trying to produce 1 FUEL
-    def cost_to_produce(need: Quantity) -> int:
-        if need.chemical == 'ORE':
-            # Ore is easy to produce, and costs 1 per ore by definition
-            return need.amount
-        
-        ore_cost = 0
-        while stock[need.chemical] < need.amount:
-            formula = f[need.chemical]
-            # Run formula
+    # Represent fuel as a deficit, which we need to balance
+    stock["FUEL"] = -target_fuel
+
+    # Try to balance each chemical in turn by applying the formula
+    # (the key is, we also have negative stock, which we resolve by applying
+    # the formula with negative values)
+    # Don't balance ORE: allow it to become negative, and its value will
+    # be the total ORE used.
+    while True:
+        balanced = True
+        for chemical in stock:
+            if chemical == "ORE" or stock[chemical] >= 0:
+                continue
+            formula = f[chemical]
+            times = (-stock[chemical] + formula.produces.amount - 1) \
+                    // formula.produces.amount
+            stock[chemical] += times * formula.produces.amount
             for item in formula.requires:
-                ore_cost += cost_to_produce(item)
-            stock[need.chemical] += formula.produces.amount
-        
-        stock[need.chemical] -= need.amount
-        return ore_cost
+                stock[item.chemical] -= times * item.amount
+            balanced = False
+            # Restart to avoid 'dictionary changed size during iteration'
+            break
 
-    return cost_to_produce(Quantity(1, 'FUEL'))
+        if balanced:
+            # We didn't make any changes this iteration, so we're done
+            break
+
+    return -stock['ORE']
 
 
 def max_fuel(strings, ore_limit=1000000000000):
@@ -86,51 +108,38 @@ def max_fuel(strings, ore_limit=1000000000000):
     Given formula strings and an ore limit, return the maximum amount of FUEL
     that can be produced before running out of ore.
 
-    This formula works but is too slow. I kind of like how it tracks ORE as
-    stock though.
+    Since our ore_needed code accepts a target_fuel parameter, this can
+    be done via binary search.
     """
-    formulae = parse_formulas(strings)
+    low, high, ore = 1, 1, 0
+    # Try factors of 10 until we exceed the limit, to reduce the search space
+    while ore <= ore_limit:
+        low, high = high, high * 10
+        ore = ore_needed(strings, high)
+    
+    # Binary search within this range to find the actual maximum
+    mid = 0
+    while high - low > 1:
+        mid = (high + low) // 2
+        ore = ore_needed(strings, mid)
 
-    # Track how much we have of each chemical
-    stock = collections.defaultdict(lambda: 0)
+        if ore > ore_limit:
+            high = mid
+        else:
+            low = mid
 
-    # Ore is also tracked in stock, but we have no formula to produce more.
-    stock['ORE'] = ore_limit
-
-    # Recursively count the ORE required, starting by trying to produce 1 FUEL
-    def produce(need: Quantity) -> int:
-        while stock[need.chemical] < need.amount:
-            if need.chemical in formulae:
-                formula = formulae[need.chemical]
-                # Run formula
-                for item in formula.requires:
-                    if not produce(item):
-                        # We couldn't produce this item, so we can't produce the result
-                        return False
-                stock[need.chemical] += formula.produces.amount
-            else:
-                # We can't produce any more of this.
-                return False
-        
-        stock[need.chemical] -= need.amount
-        return True
-
-    fuel_made = 0
-    while produce(Quantity(1, 'FUEL')):
-        fuel_made += 1
-
-    return fuel_made
+    return low
 
 
 class TestQ14(unittest.TestCase):
     def test_basic(self):
         strs = ['1 ORE => 2 A', '6 A => 1 FUEL']
-        self.assertEqual(solve_reactions(strs), 3, '3 ORE -> 6 A -> 1 FUEL')
+        self.assertEqual(ore_needed(strs), 3, '3 ORE -> 6 A -> 1 FUEL')
         self.assertEqual(max_fuel(strs, ore_limit=10), 3)
         self.assertEqual(max_fuel(strs, ore_limit=20), 6)
 
         strs = ['10 ORE => 10 A', '5 A => 1 FUEL']
-        self.assertEqual(solve_reactions(strs), 10, 'cannot run partial formula')
+        self.assertEqual(ore_needed(strs), 10, 'cannot run partial formula')
 
 
     def test_example1(self):
@@ -142,7 +151,8 @@ class TestQ14(unittest.TestCase):
             '7 A, 1 D => 1 E',
             '7 A, 1 E => 1 FUEL',
         ]
-        self.assertEqual(solve_reactions(strs), 31)
+        self.assertEqual(ore_needed(strs), 31)
+
 
     def test_example2(self):
         strs = [
@@ -154,8 +164,9 @@ class TestQ14(unittest.TestCase):
             '4 C, 1 A => 1 CA',
             '2 AB, 3 BC, 4 CA => 1 FUEL',
         ]
-        self.assertEqual(solve_reactions(strs), 165)
-    
+        self.assertEqual(ore_needed(strs), 165)
+
+
     def test_large_example1(self):
         strs = [
             '157 ORE => 5 NZVS',
@@ -168,8 +179,9 @@ class TestQ14(unittest.TestCase):
             '165 ORE => 2 GPVTF',
             '3 DCFZ, 7 NZVS, 5 HKGWZ, 10 PSHF => 8 KHKGT',
         ]
-        self.assertEqual(solve_reactions(strs), 13312)
-        #self.assertEqual(max_fuel(strs), 82892753)
+        self.assertEqual(ore_needed(strs), 13312)
+        self.assertEqual(max_fuel(strs), 82892753)
+
 
     def test_large_example2(self):
         strs = [
@@ -186,8 +198,9 @@ class TestQ14(unittest.TestCase):
             '1 VJHF, 6 MNCFX => 4 RFSQX',
             '176 ORE => 6 VJHF',
         ]
-        self.assertEqual(solve_reactions(strs), 180697)
-        #self.assertEqual(max_fuel(strs), 5586022)
+        self.assertEqual(ore_needed(strs), 180697)
+        self.assertEqual(max_fuel(strs), 5586022)
+
 
     def test_large_example3(self):
         strs = [
@@ -209,9 +222,15 @@ class TestQ14(unittest.TestCase):
             '7 XCVML => 6 RJRHP',
             '5 BHXH, 4 VRPVC => 5 LTCX',
         ]
-        self.assertEqual(solve_reactions(strs), 2210736)
-        #self.assertEqual(max_fuel(strs), 460664)
+        self.assertEqual(ore_needed(strs), 2210736)
+        self.assertEqual(max_fuel(strs), 460664)
+
 
     def test_part1(self):
         strs = util.read_lines('inputs/q14')
-        self.assertEqual(solve_reactions(strs), 201324)
+        self.assertEqual(ore_needed(strs), 201324)
+
+
+    def test_part2(self):
+        strs = util.read_lines('inputs/q14')
+        self.assertEqual(max_fuel(strs), 6326857)
