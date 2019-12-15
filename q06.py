@@ -1,5 +1,6 @@
 from collections import defaultdict
 from copy import deepcopy
+from util import path_find
 import math
 
 def loadOrbits(filename):
@@ -47,55 +48,13 @@ def makeBidirectional(graph):
 def findRoute(graph, start='YOU', goal='SAN'):
     """ find minimal route from start to goal along graph """
 
-    def reconstructPath(cameFrom, current):
-        totalPath = [ current ]
-        while current in cameFrom:
-            current = cameFrom[current]
-            totalPath.insert(0, current)
-        return totalPath
-
     # Construct a bidirectional graph, as we can go to any object orbiting OR
     # being orbited by our current object.
     neighboursOf = makeBidirectional(graph)
+    def neighbourFunc(node):
+        return neighboursOf[node]
 
-    # Heuristic function. Currently 0 (equivalent to Dijkstra)
-    h = lambda x: 0
-
-    # Set of discovered nodes
-    openSet = { start }
-
-    # For node n, cameFrom[n] is the node immediately preceding it on the
-    # cheapest path from start to n currently known
-    cameFrom = {}
-
-    # For node n, gScore[n] is the cost of the cheapest path from start to n
-    # currently known
-    gScore = defaultdict(lambda: math.inf)
-    gScore[start] = 0
-
-    # For node n, fScore[n] = gScore[n] + h(n)
-    fScore = defaultdict(lambda: math.inf)
-    fScore[start] = h(start)
-
-    while len(openSet) > 0:
-        current = min(openSet, key=lambda x: fScore[x])
-        if current == goal:
-            return reconstructPath(cameFrom, current)
-
-        openSet.remove(current)
-        for neighbour in neighboursOf[current]:
-            # weights of the edges are all 0 in this case
-            tentative_gScore = gScore[current] + 0
-            if tentative_gScore < gScore[neighbour]:
-                # This path to the neighbour is better than the previous one
-                cameFrom[neighbour] = current
-                gScore[neighbour] = tentative_gScore
-                fScore[neighbour] = gScore[neighbour] + h(neighbour)
-                if neighbour not in openSet:
-                    openSet.add(neighbour)
-
-    # openset is empty, but goal never reached?
-    return None
+    return path_find(start, goal, neighbourFunc)
 
 def minimumTransfersRequired(graph):
     route = findRoute(graph)
