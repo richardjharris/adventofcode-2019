@@ -79,6 +79,7 @@ class IntcodeSim:
         :attribute inputFn: If set, inputs will be retrieved by calling this function,
                             which should return an integer. (If queuedInputs is non-empty,
                             values will be pulled from there first)
+                            A return value of 'None' will cause the machine to terminate.
         :attribute outputFn: If set, will be called with a single integer argument for
                              for each output value. Values will also be added to 'outputs'
         :attribute relativeBase: the base address for RELATIVE-mode instructions
@@ -236,7 +237,11 @@ class IntcodeSim:
             self.arr[args[2]] = args[0] * args[1]
         
         elif opcode == Opcode.INPUT:
-            self.arr[args[0]] = self.__getInput()
+            value = self.__getInput()
+            if value is None:
+                self.finished = True
+            else:
+                self.arr[args[0]] = value
 
         elif opcode == Opcode.OUTPUT:
             self.__putOutput(args[0])
