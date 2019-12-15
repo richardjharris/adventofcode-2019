@@ -1,8 +1,14 @@
 import enum
 import math
+import sys
 from intcode import IntcodeSim
 from dataclasses import dataclass, field
 from collections import defaultdict
+from util import path_find
+
+# Functional programming: am I a joke to you?
+sys.setrecursionlimit(2000)
+
 
 class Status(enum.Enum):
     hit_wall = 0
@@ -137,66 +143,47 @@ class BotHandler():
         print('')
 
 
+    def neighboursOf(self, point):
+        "given a co-ordinate, return its neighbours (i.e. non-wall pieces)"
+        n = set()
+        for code in range(4):
+            target = apply_movement(point, code)
+            if target in self.world and self.world[target] is not WALL:
+                n.add(target)
+        return n
+
     def findRoute(self, start, goal):
         """
         Return minimal route from start to goal along the maze.
 
-        TODO: merge into q06.
         """
-        def reconstructPath(cameFrom, current):
-            totalPath = [ current ]
-            while current in cameFrom:
-                current = cameFrom[current]
-                totalPath.insert(0, current)
-            return totalPath
+        return path_find(
+            start=start,
+            goal=goal,
+            neighbour_func=lambda p: self.neighboursOf(p),
+        )
 
-        def neighboursOf(point):
-            "given a co-ordinate, return its neighbours (i.e. non-wall pieces)"
-            n = []
-            for code in range(4):
-                target = apply_movement(point, code)
-                if target in self.world and self.world[target] is not WALL:
-                    n.append(target)
-            return n
+    def spreadOxygen(self):
+        """
+        Returns the number of minutes required to spread oxygen through
+        the entire map, starting from the oxygen system.
 
-        # Heuristic function. Currently 0 (equivalent to Dijkstra)
-        h = lambda x: 0
+        As it takes a minute to spread oxygen from a point to its neighbours,
+        and the maze layout is a tree (no loops) of corridors with width=1,
+        this is equal to the largest distance from the oxygen system to
+        a dead end.
+        """
+        def distanceToDeadEnd(point, cameFrom=None):
+            "returns the distance from point to a dead-end"
+            neighbours = self.neighboursOf(point)
+            neighbours.discard(cameFrom)
+            if neighbours:
+                return 1 + max(distanceToDeadEnd(n, point) for n in neighbours)
+            else:
+                # We reached a dead-end: 
+                return 0
 
-        # Set of discovered nodes
-        openSet = { start }
-
-        # For node n, cameFrom[n] is the node immediately preceding it on the
-        # cheapest path from start to n currently known
-        cameFrom = {}
-
-        # For node n, gScore[n] is the cost of the cheapest path from start to n
-        # currently known
-        gScore = defaultdict(lambda: math.inf)
-        gScore[start] = 0
-
-        # For node n, fScore[n] = gScore[n] + h(n)
-        fScore = defaultdict(lambda: math.inf)
-        fScore[start] = h(start)
-
-        while len(openSet) > 0:
-            current = min(openSet, key=lambda x: fScore[x])
-            if current == goal:
-                return reconstructPath(cameFrom, current)
-
-            openSet.remove(current)
-            for neighbour in neighboursOf(current):
-                # weights of the edges are all 0 in this case
-                tentative_gScore = gScore[current] + 0
-                if tentative_gScore < gScore[neighbour]:
-                    # This path to the neighbour is better than the previous one
-                    cameFrom[neighbour] = current
-                    gScore[neighbour] = tentative_gScore
-                    fScore[neighbour] = gScore[neighbour] + h(neighbour)
-                    if neighbour not in openSet:
-                        openSet.add(neighbour)
-
-        # openset is empty, but goal never reached?
-        return None
+        return distanceToDeadEnd(self.oxygen_system)
 
 
 handler = BotHandler()
@@ -217,3 +204,6 @@ handler.paintMap(route=route)
 print(route)
 # Route length should not include the droid
 print(len(route) - 1)
+
+# Now do oxygen stuff
+print(handler.spreadOxygen())
