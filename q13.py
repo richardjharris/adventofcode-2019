@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from intcode import IntcodeSim
 from typing import *
+import util
 
 class Tile(Enum):
     empty = 0
@@ -82,8 +83,8 @@ def part2():
         args: List[int] = field(default_factory=list)
         score: int = 0
         step: int = 0
-        ballPos: Optional[Tuple[int, int]] = None
-        batPos: Optional[Tuple[int, int]] = None
+        ballX: Optional[int] = None
+        batX: Optional[int] = None
 
     state = State()
 
@@ -104,9 +105,9 @@ def part2():
 
             # Keep track of bat/ball position
             if tile == Tile.bat:
-                state.batPos = (x,y)
+                state.batX = x
             elif tile == Tile.ball:
-                state.ballPos = (x, y)
+                state.ballX = x
 
             state.step += 1
             # Wait for the machine to output the whole screen once
@@ -116,18 +117,7 @@ def part2():
                 print("Score: " + str(state.score))
 
     def handleInput() -> int:
-        if state.ballPos is None or state.batPos is None:
-            # Don't know what to do yet, stay put
-            return 0
-        else:
-            # Follow the ball
-            delta = state.batPos[0] - state.ballPos[0]
-            if delta < 0:
-                return 1
-            elif delta == 0:
-                return 0
-            else:
-                return -1
+        return util.sign(state.ballX - state.batX)
 
     i = IntcodeSim.fromFile("inputs/q13")
     # Set machine to 'play for free' mode

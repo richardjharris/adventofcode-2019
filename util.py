@@ -31,6 +31,15 @@ def gcd(a, b):
 def lcm(a,b):
     return abs(a*b) // gcd(a,b)
 
+def sign(val):
+    "return -1 if negative, 0 if 0, or 1 if positive"
+    if val < 0:
+        return -1
+    elif val > 0:
+        return 1
+    else:
+        return 0
+
 def path_find(start, goal, neighbour_func, heuristic_func = lambda x: 0):
     def reconstructPath(cameFrom, current):
         totalPath = [ current ]
