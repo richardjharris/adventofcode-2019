@@ -15,7 +15,6 @@ def apply_fft(i: list, times: int = 1) -> list:
     i = list(map(int, i))
 
     for time in range(times):
-        print(f"time {time}/{times}")
         i = apply_fft_once(i)
 
     return i
@@ -26,7 +25,6 @@ def apply_fft_once(i: list) -> list:
     o = []
 
     for row in reversed(range(len(i))):
-        print(f"  row: {row}")
         if row == num_digits - 1:
             # The last row pattern is all zeroes except the last digit, which is 1.
             total = int(i[-1])
@@ -43,7 +41,6 @@ def apply_fft_once(i: list) -> list:
             num_groups = math.ceil((num_digits - row) / group_size)
             prev_offset = row + 1
             total = prev_total
-            #print(f"group_size={group_size} num_groups={num_groups} off={offset}")
 
             for group_index in range(num_groups):
                 group_start = offset + group_size * group_index
@@ -73,7 +70,6 @@ def apply_fft_once(i: list) -> list:
                     # If the group didn't exist in the last row, do nothing
                     if idx > num_digits - 1:
                         continue
-                    #print(f"apply prev_mult at idx {idx} {multiplier(row=row+1,col=idx)} * {i[idx]}")
                     total -= multiplier(row=row+1, col=idx) * i[idx]
 
                 for idx in recalc:
@@ -81,12 +77,8 @@ def apply_fft_once(i: list) -> list:
                     if idx > num_digits - 1:
                         continue
                     # Apply the multiplier for this row
-                    #print(f"apply mult at idx {idx} {multiplier(row=row,col=idx)} * {i[idx]}")
                     total += multiplier(row=row, col=idx) * i[idx]
 
-                #print(f"group {group_index}: ({group_start} -> {group_end}) (prev: {prev_group_start} -> {prev_group_end})")
-
-        #print(f"total = {total} last_digit = {abs(total) % 10}")
         prev_total = total
         # Add last digit of total to output
         o.insert(0, abs(total) % 10)
@@ -105,6 +97,6 @@ def find_message(i: list) -> str:
     message = ''.join(str(char) for char in i[message_offset:message_offset+8])
 
 #print(apply_fft("69317163492948606335995924319873", times=100)[0:8])
-#print(apply_fft(util.slurp("inputs/q16"), times=100)[0:8])
+print(apply_fft(util.slurp("inputs/q16"), times=100)[0:8])
 #print(apply_fft(util.slurp("inputs/q16") * 10000, times=1))
-print(find_message("03036732577212944063491565474664"))
+#print(find_message("03036732577212944063491565474664"))
