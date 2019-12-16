@@ -1,5 +1,6 @@
-import math
 import itertools
+import math
+import unittest
 import util
 
 def multiplier(col: int, row: int, cycle = [0,1,0,-1]) -> int:
@@ -17,7 +18,9 @@ def apply_fft(i: list, times: int = 1) -> list:
     for time in range(times):
         i = apply_fft_once(i)
 
-    return i
+    # Convert back to string
+    return "".join(map(str, i))
+
 
 def apply_fft_once(i: list) -> list:
     num_digits = len(i)
@@ -92,11 +95,65 @@ def find_message(i: list) -> str:
     then locate the eight-digit message found at the location indicated by the
     first eight ints of the input.
     """
-    message_offset = int(''.join(str(char) for char in i[0:8]))
-    output_list = apply_fft(i * 10000, times=100)
-    message = ''.join(str(char) for char in i[message_offset:message_offset+8])
+    i = list(map(int, i)) * 10000
+    N = len(i)
+    M = int(''.join(str(char) for char in i[0:7]))
 
-#print(apply_fft("69317163492948606335995924319873", times=100)[0:8])
-print(apply_fft(util.slurp("inputs/q16"), times=100)[0:8])
-#print(apply_fft(util.slurp("inputs/q16") * 10000, times=1))
-#print(find_message("03036732577212944063491565474664"))
+    assert M > len(i) // 2
+
+    # We exploit the fact that the message offset is in the bottom half of
+    # the matrix (bottom-right quadrant) which means it only contains 1s and 0s.
+    # The bottom half forms a triangle, e.g.:
+    # .....
+    # .....
+    # 00111
+    # 00011
+    # 00001
+    for _ in range(100):
+        output = [0] * N
+        total = None
+        # We only need to calculate from the message offset til the end
+        for idx in reversed(range(M, N)):
+            if total is None:
+                # Bottom row has multiplier=1 from idx onwards, so sum
+                total = sum(i[idx:N])
+            else:
+                # Higher rows can also be summed in the same fashion, but we shortcut
+                # by using the previous total + one extra '1' multiplier for the left-
+                # most column
+                total += i[idx]
+
+            # Record the output (we ignore anything before the message offset)
+            output[idx] = abs(total) % 10
+        i = output
+
+    return ''.join(str(char) for char in i[M:M+8])
+
+class TestQ16(unittest.TestCase):
+    def test_part1_basic(self):
+        self.assertEqual(apply_fft("12345678", times=1), "48226158")
+        self.assertEqual(apply_fft("12345678", times=2), "34040438")
+        self.assertEqual(apply_fft("12345678", times=3), "03415518")
+        self.assertEqual(apply_fft("12345678", times=4), "01029498")
+
+
+    def test_part1_large_example(self):
+        self.assertEqual(apply_fft("80871224585914546619083218645595", times=100)[0:8], "24176176")
+        self.assertEqual(apply_fft("19617804207202209144916044189917", times=100)[0:8], "73745418")
+        self.assertEqual(apply_fft("69317163492948606335995924319873", times=100)[0:8], "52432133")
+
+
+    def test_part1_puzzle(self):
+        answer = apply_fft(util.slurp("inputs/q16"), times=100)[0:8]
+        self.assertEqual(answer, "30369587")
+
+
+    def test_part2_basic(self):
+        self.assertEqual(find_message("03036732577212944063491565474664"), "84462026")
+        self.assertEqual(find_message("02935109699940807407585447034323"), "78725270")
+        self.assertEqual(find_message("03081770884921959731165446850517"), "53553731")
+
+
+    def test_part2_puzzle(self):
+        answer = find_message(util.slurp("inputs/q16"))
+        self.assertEqual(answer, "27683551")
