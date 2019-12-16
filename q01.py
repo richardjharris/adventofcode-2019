@@ -1,8 +1,8 @@
 "Day 1 - The Tyranny of the Rocket Equation"
 import math
 import unittest
+import util
 from typing import Callable
-from util import read_lines
 
 def fuel_calc(value: int) -> int:
     """
@@ -13,7 +13,7 @@ def fuel_calc(value: int) -> int:
 
 def recursive_fuel_calc(value: int) -> int:
     """
-    Like fuelCalc, except also consider the fuel required to generate
+    Like fuel_calc, except also consider the fuel required to generate
     mass ALSO requires fuel of its own. Return the total fuel required.
     """
     total = 0
@@ -30,7 +30,7 @@ def total_fuel(input_file: str, fuel: Callable[[int], int] = fuel_calc) -> int:
     for all modules in input, return the mass required to launch them
     using the specified calculation
     """
-    inputs = read_lines(input_file)
+    inputs = util.read_lines(input_file)
     return sum(fuel(int(mass)) for mass in inputs)
 
 
