@@ -100,6 +100,7 @@ class IntcodeSim:
         self.inputFn = None
         self.outputFn = None
         self.relativeBase = 0
+        self.lastOpcode = None
 
     def setMemory(self, position, value):
         "functional interface to setting the memory"
@@ -182,14 +183,48 @@ class IntcodeSim:
         while not self.finished:
             self.__runStep()
         return self
-    
+
+    def recv(self, count=1):
+        """
+        Generator that runs the simulator until it has produced 'count'
+        outputs, and returns them as a tuple.
+
+        Returns None if the intcode had halted before all the requested
+        values could be produced.
+        """
+        ret = []
+
+        for _ in range(count):
+            if self.finished:
+                return None
+            value = self.__runStep()
+            if value is not None:
+                ret.append(value)
+
+        return tuple(ret)
+
+    def send(self, value):
+        """
+        Run the simulator until input is requested, and pass 'value' to
+        the input handler.
+        """
+        while True:
+            self.__runStep()
+            
+
+         
     def __runStep(self):
-        # Execute a single instruction.
+        """
+        Execute a single instruction. Returns an int if the instruction
+        returned an output, otherwise None.
+        """
         if self.finished:
-            return
+            return None
 
         opcode, parameterModes = self.parseOpcode(self.arr[self.pos])
+        self.lastOpcode = opcode
         self.pos += 1
+        return_value = None
 
         # Build arguments
         args = []
@@ -245,6 +280,7 @@ class IntcodeSim:
 
         elif opcode == Opcode.OUTPUT:
             self.__putOutput(args[0])
+            return_value = args[0]
 
         elif opcode == Opcode.JUMP_IF_TRUE:
             if args[0] != 0:
@@ -267,6 +303,8 @@ class IntcodeSim:
             self.finished = True
         else:
             raise ValueError("unknown opcode: " + opcode)
+
+    return return_value
 
 
 class TestQ2(unittest.TestCase):
