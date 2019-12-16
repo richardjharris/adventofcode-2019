@@ -1,8 +1,8 @@
 "Day 3 - Crossed Wires"
 import enum
 import unittest
+import util
 from typing import Iterable, Tuple, Dict, Optional, List
-from util import read_lines
 
 Point = Tuple[int, int]
 
@@ -113,7 +113,7 @@ class TestQ3(unittest.TestCase):
 
 
     def test_part1(self):
-        wires = read_lines("inputs/q03")
+        wires = util.read_lines("inputs/q03")
         self.assertEqual(part1(wires), 1225)
 
 
@@ -134,5 +134,5 @@ class TestQ3(unittest.TestCase):
 
 
     def test_part2(self):
-        wires = read_lines("inputs/q03")
+        wires = util.read_lines("inputs/q03")
         self.assertEqual(part2(wires), 107036)
