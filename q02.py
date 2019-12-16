@@ -1,16 +1,15 @@
 "Day 2 - 1202 Program Alarm"
-from typing import Optional, Tuple
+import intcode
 import unittest
-
-from intcode import IntcodeSim
-from util import slurp
+import util
+from typing import Optional, Tuple
 
 def part1(filename: str) -> int:
     """
     Runs the intcode at filename, patching as directed,
     and returns the value at memory position 0
     """
-    i = IntcodeSim.fromFile(filename)
+    i = intcode.IntcodeSim.fromFile(filename)
     # Patch code as directed
     i.arr[1] = 12
     i.arr[2] = 2
@@ -22,14 +21,14 @@ def part2(filename: str, target_output: int) -> Optional[Tuple[int, int]]:
     Determine the values of memory position 0 + 1 which will result in the
     target output.
     """
-    code = slurp(filename)
+    code = util.slurp(filename)
 
     # The solution requires us to return 100 * noun + verb. Therefore it's a
     # good bet that both noun and verb are positive and have a maximum of two
     # digits.
     for noun in range(100):
         for verb in range(100):
-            i = IntcodeSim(code)
+            i = intcode.IntcodeSim(code)
             i.arr[1] = noun
             i.arr[2] = verb
             i.run()
