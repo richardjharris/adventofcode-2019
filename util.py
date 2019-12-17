@@ -18,7 +18,7 @@ def slurp(filename):
 def read_lines(filename):
     "read contents of filename as a list of lines"
     with open(filename, 'r') as fh:
-        return fh.readlines()
+        return [line.rstrip('\n') for line in fh.readlines()]
 
 def manhattan_distance(a, b):
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
