@@ -14,17 +14,27 @@ def parse_claims(lines):
         yield tuple(map(int, m.groups()))
 
 
+def make_claim_map(claims):
+    """
+    Process incoming claim lines and return an array mapping each square
+    inch of the fabric to the number of claims made against it.
+    """
+    canvas = np.zeros((1000, 1000))
+
+    for claim in claims:
+        _, left, top, width, height = claim
+        ones = np.ones((height, width))
+        canvas[top:top+height, left:left+width] += ones
+
+    return canvas
+
+
 def compute_claims(lines):
     """
     Process incoming claim lines and return the number of square inches
     of fabric that are within two or more claims.
     """
-    canvas = np.zeros((1000, 1000))
-    for claim in parse_claims(lines):
-        _, left, top, width, height = claim
-        ones = np.ones((height, width))
-        canvas[top:top+height, left:left+width] += ones
-
+    canvas = make_claim_map(parse_claims(lines))
     num_contested = sum(1 for v in np.nditer(canvas) if v >= 2)
     return num_contested
 
@@ -34,13 +44,8 @@ def find_virgin_claim(lines):
     Process incoming claim lines and return the claim ID which doesn't
     overlap with any other.
     """
-    canvas = np.zeros((1000, 1000))
     claims = list(parse_claims(lines))
-
-    for claim in claims:
-        _, left, top, width, height = claim
-        ones = np.ones((height, width))
-        canvas[top:top+height, left:left+width] += ones
+    canvas = make_claim_map(claims)
     
     def unclaimed(canvas, claim):
         _, left, top, width, height = claim
