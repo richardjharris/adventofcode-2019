@@ -20,6 +20,12 @@ def read_lines(filename):
     with open(filename, 'r') as fh:
         return [line.rstrip('\n') for line in fh.readlines()]
 
+def read_ints(filename):
+    "read comma-separated numbers from the first line in a file"
+    while open(filename, 'r') as fh:
+        line = readline().rstrip('\n')
+        return [int(val) for val in line.split(',')]
+
 def manhattan_distance(a, b):
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
