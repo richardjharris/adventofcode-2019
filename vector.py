@@ -27,6 +27,18 @@ class Vector2D():
         return Vector2D(-self.x, -self.y)
 
 
+    def __getitem__(self, index):
+        if isinstance(index, int):
+            if index == 0:
+                return self.x
+            elif index == 1:
+                return self.y
+            else:
+                raise IndexError()
+        else:
+            raise ValueError("must be int")
+
+
     def euclidean_norm(self):
         return math.sqrt((self.x * self.x) + (self.y * self.y))
 
@@ -38,6 +50,15 @@ class Vector2D():
     def copy(self):
         return Vector2D(self.x, self.y)
 
+
+    def minimize(self, o):
+        self.x = min(self.x, o.x)
+        self.y = min(self.y, o.y)
+
+
+    def maximize(self, o):
+        self.x = max(self.x, o.x)
+        self.y = max(self.y, o.y)
 
 
 def dot_product(a, b):
@@ -78,3 +99,9 @@ class TestVector(unittest.TestCase):
         self.assertEqual( v * 5, xy(5, 5) )
         self.assertEqual( xy(1, 2) * 5, xy(5, 10) )
         self.assertEqual(-xy(3,-5), xy(-3, 5))
+
+    def test_tuple(self):
+        v = xy(42, -100)
+        x, y = v
+        self.assertEqual(x, 42)
+        self.assertEqual(y, -100)
