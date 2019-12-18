@@ -1,53 +1,36 @@
 import intcode
 import enum
+import grid
 
-program = intcode.IntcodeSim.fromFile("inputs/q17")
-
-class Direction(enum.IntEnum):
-    "each direction is 90' right of the previous"
-    up = 0
-    right = 1
-    down = 2
-    left = 3
-
-MOVEMENT = {
-    Direction.up: (0, -1),
-    Direction.right: (1, 0),
-    Direction.left: (-1, 0),
-    Direction.down: (0, 1),
-}
-
-def print_grid(grid):
-    for row in grid:
-        print("".join(row))
-
-def mark_intersections(grid):
-    parameter_sum = 0
-
-    for y in range(1, len(grid) - 1):
-        for x in range(1, len(grid[y]) - 1):
-            if all(grid[y][x] == '#' for (y,x) in [(y+1,x), (y-1,x), (y,x+1), (y,x-1), (y,x)]):
-                grid[y][x] = 'O'
-                parameter_sum += (y * x)
-
-    return parameter_sum
-
-program.run()
-
+grid = grid.Grid(default='x')
 x, y = 0, 0
-grid = [[' '] * 45 for _ in range(33)]
-for char in program.outputs:
+def handle_output(char):
+    global x, y, grid
     if char == 10:
         y += 1
         x = 0
     else:
-        grid[y][x] = chr(char)
+        grid[x,y] = chr(char)
         x += 1
 
-print_grid(grid)
+def mark_intersections(grid):
+    parameter_sum = 0
 
+    for cell in grid.cells():
+        if all(v == '#' for v in cell.neighbour_values(and_me=True)):
+            cell.val = 'O'
+            parameter_sum += (cell.y * cell.x)
+
+    return parameter_sum
+
+program = intcode.IntcodeSim.fromFile("inputs/q17")
+program.outputFn = handle_output
+program.run()
+print(str(grid))
 print(mark_intersections(grid))
-print_grid(grid)
+print(str(grid))
+
+import sys; sys.exit(0)
 
 # The path was manually generated, then I ran an algorithm to try various prefix
 # values for A and suffix values for C. When that algorithm didn't work immediately,
@@ -72,7 +55,7 @@ for function in [Movement, A, B, C]:
     program.queueInput(10)
 
 # Indicate if we want the video feed
-program.queueInput(ord('y')).queueInput(10)
+program.queueInput(ord('n')).queueInput(10)
 
 def clearScreen():
     print(chr(27)+'[2j')
@@ -84,7 +67,7 @@ def handleOutput(char):
     "handle screen rendering and final dust value"
     global buf
     if char == 10 and buf.endswith("\n"):
-        clearScreen()
+        #clearScreen()
         print(buf)
         buf = ""
     elif char > 255:
@@ -93,6 +76,6 @@ def handleOutput(char):
         buf += chr(char)
 
 program.outputFn = handleOutput
-clearScreen()
+#clearScreen()
 program.run()
 print("finished")
