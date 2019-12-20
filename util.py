@@ -22,7 +22,7 @@ def read_lines(filename):
 
 def read_ints(filename):
     "read comma-separated numbers from the first line in a file"
-    while open(filename, 'r') as fh:
+    with open(filename, 'r') as fh:
         line = readline().rstrip('\n')
         return [int(val) for val in line.split(',')]
 
