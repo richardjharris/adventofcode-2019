@@ -38,10 +38,7 @@ painted[pos] = Color.white
 def handleInput():
     "returns color of robot's current panel"
     print(f"asking for input at {pos}")
-    if pos in painted:
-        return painted[pos].value
-    else:
-        return Color.black.value
+    return painted.get(pos, Color.black).value
 
 def handleOutput(x):
     global pos
@@ -82,7 +79,8 @@ maxY = max(painted, key=lambda p: p[1])[1]
 
 for y in range(minY, maxY + 1):
     for x in range (minX, maxX + 1):
-        color = painted[(x,y)] if (x,y) in painted else Color.white
+        color = painted.get((x,y), Color.white)
+        char = ['.', '#'][color == Color.black]
         char = "." if color == Color.black else "#"
         sys.stdout.write(char)
     sys.stdout.write("\n")
