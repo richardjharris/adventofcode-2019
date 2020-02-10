@@ -1,106 +1,62 @@
 from __future__ import annotations
 import collections
-import dataclasses
 import inspect
 import unittest
+
+from gridcell import GridCell
+from direction import Direction
 import vector
-
-@dataclasses.dataclass
-class Cell():
-    """
-    cursor into a value in a grid. also allows manipulation of neighbouring
-    cells
-    """
-    x: int
-    y: int
-    val = property()
-    grid: Grid
-
-    @property
-    def val(self):
-        return self.grid[self.coord()]
-
-
-    @val.setter
-    def val(self, value):
-        self.grid[self.coord()] = value 
-
-
-    def __repr__(self):
-        # Omit grid reference, as it is typically known
-        return f"Cell(x={self.x}, y={self.y}, val={self.val})"
-
-
-    def coord(self):
-        return (self.x, self.y)
-
-
-    def vector(self):
-        return vector.Vector2D(x=self.x, y=self.y)
-
-
-    def neighbour_values(self, and_me=False):
-        """
-        return the values of the values of cells adjacent to this one in four
-        directions, plus our own value (if here=True)
-        """
-        x, y = self.x, self.y
-        for pos in [(x-1,y), (x+1,y), (x,y-1), (x,y+1)]:
-            yield self.grid[pos]
-
-        if and_me:
-            yield self.grid[x,y]
-
 
 class Grid():
     def __init__(self, default=None):
         self.default = default
         self.data = {}
+        self._collision_values = set()
 
 
-    def __getitem__(self, index):
-        if isinstance(index, tuple):
-            x, y = index
-            if not isinstance(x, int):
-                raise TypeError('x has invalid type')
-            if not isinstance(y, int):
-                raise TypeError('y has invalid type')
-            return self.get(x, y)
-        else:
-            raise TypeError('invalid argument type')
+    def __getitem__(self, pos):
+        return self.get(pos)
 
 
-    def __setitem__(self, index, value):
-        if isinstance(index, tuple):
-            x, y = index
-            if not isinstance(x, int):
-                raise TypeError('x has invalid type')
-            if not isinstance(y, int):
-                raise TypeError('y has invalid type')
-            self.set(x, y, value)
-        else:
-            raise TypeError('invalid argument type')
+    def __setitem__(self, pos, value):
+        self.set(pos, value)
 
 
-    def get(self, x, y):
+    def get(self, pos):
+        x, y = pos
         if (x,y) in self.data:
             return self.data[(x,y)]
         else:
             return self.default
 
 
-    def set(self, x, y, value):
+    def set(self, pos, value):
+        x, y = pos
         self.data[(x,y)] = value
 
 
-    def at(self, x, y):
-        return Cell(x=x, y=y, grid=self)
+    def at(self, *pos):
+        x, y = pos
+        return GridCell(x=x, y=y, grid=self)
 
 
     def cells(self):
-        "iterator returning all cells, as Cell objects"
+        "iterator returning all cells, as GridCell objects"
         for xy in self.data.keys():
             yield self.at(xy[0], xy[1])
+
+
+    def collides(self, x, y, from_dir=None) -> bool:
+        # not supported yet
+        assert from_dir is None
+        return self[x, y] in self._collision_values
+
+
+    def set_collision(self, value, is_collision=True):
+        if is_collision:
+            self._collision_values.add(value)
+        else:
+            self._collision_values.remove(value)
 
 
     def count(self, *values):
@@ -168,6 +124,13 @@ class Grid():
         return g
 
 
+    @classmethod
+    def from_file(cls, filename):
+        with open(filename, 'r') as fh:
+            grid = Grid.from_string(filename.read().rstrip('\n'))
+        return grid
+
+
     def __repr__(self):
         return "%s(%r)" % (self.__class__, self.__dict__)
 
@@ -231,3 +194,13 @@ class TestGrid(unittest.TestCase):
         g[0,1] = 't'
         self.assertEqual(g.bounds(), (vector.xy(-1,-1), vector.xy(0,1)))
         self.assertEqual(str(g), "x.\ny.\nzt")
+
+    def test_collides(self):
+        g = Grid.from_string("***\n* *\n***")
+        g.set_collision("*")
+        self.assertEqual(g.collides(0, 0), True)
+        self.assertEqual(g.collides(2, 2), True)
+        self.assertEqual(g.collides(1, 1), False)
+
+        g.set_collision("*", False)
+        self.assertEqual(g.collides(0, 0), False)

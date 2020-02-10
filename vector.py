@@ -1,5 +1,6 @@
 import dataclasses
 import math
+import numbers
 import unittest
 
 @dataclasses.dataclass
@@ -11,16 +12,73 @@ class Vector2D():
     x: float = 0
     y: float = 0
 
-    def __add__(self, o):
-        return Vector2D(self.x + o.x, self.y + o.y)
+    def __repr__(self):
+        return "Vector(%r, %r)" % (self.x, self.y)
 
 
-    def __sub__(self, o):
-        return Vector2D(self.x - o.x, self.y - o.y)
+    def __iter__(self):
+        yield self.x
+        yield self.y
 
 
-    def __mul__(self, o):
-        return Vector2D(self.x * o, self.y * o)
+    def __abs__(self):
+        return self.euclidean_norm()
+
+
+    def __bool__(self):
+        return bool(self.x or self.y)
+
+
+    def __add__(self, other):
+        c = self.copy()
+        c += other
+        return c
+
+
+    def __iadd__(self, other):
+        self.x += other.x
+        self.y += other.y
+        return self
+
+
+    def __sub__(self, other):
+        c = self.copy()
+        c -= other
+        return c
+
+
+    def __isub__(self, other):
+        self.x -= other.x
+        self.y -= other.y
+        return self
+
+
+    def __mul__(self, other):
+        c = self.copy()
+        c *= other
+        return c
+
+
+    def __rmul__(self, other):
+        return self * other
+
+
+    def __imul__(self, other):
+        if isinstance(other, numbers.Real):
+            return Vector2D(self.x * other, self.y * other)
+        else:
+            return NotImplemented
+
+
+    def __matmul__(self, other):
+        try:
+            return dot_product(self, other)
+        except TypeError:
+            return NotImplemented
+
+
+    def __rmatmul__(self, other):
+        return self @ other
 
 
     def __neg__(self):
@@ -28,7 +86,7 @@ class Vector2D():
 
 
     def __getitem__(self, index):
-        if isinstance(index, int):
+        if isinstance(index, numbers.Integral):
             if index == 0:
                 return self.x
             elif index == 1:
@@ -36,11 +94,16 @@ class Vector2D():
             else:
                 raise IndexError()
         else:
-            raise ValueError("must be int")
+            raise TypeError(f"{cls.__name__} indices be integers")
+
+
+    def atan2(self, n):
+        "returns counterclockwise angle between vector and positive x-axis, in radians, -pi .. pi"
+        return math.atan2(self.y, self.x)
 
 
     def euclidean_norm(self):
-        return math.sqrt((self.x * self.x) + (self.y * self.y))
+        return math.hypot(self.x, self.y)
 
 
     def manhattan_norm(self):
@@ -51,14 +114,14 @@ class Vector2D():
         return Vector2D(self.x, self.y)
 
 
-    def minimize(self, o):
-        self.x = min(self.x, o.x)
-        self.y = min(self.y, o.y)
+    def minimize(self, other):
+        self.x = min(self.x, other.x)
+        self.y = min(self.y, other.y)
 
 
-    def maximize(self, o):
-        self.x = max(self.x, o.x)
-        self.y = max(self.y, o.y)
+    def maximize(self, other):
+        self.x = max(self.x, other.x)
+        self.y = max(self.y, other.y)
 
 
 def dot_product(a, b):
@@ -76,7 +139,7 @@ def manhattan_distance(a, b):
 
 def euclidean_distance(a, b):
     "returns Euclidean distance (length of straight line between and a b)"
-    return math.sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y))
+    return math.hypot((a.x - b.x), (a.y - b.y))
 
 
 def xy(x, y):
